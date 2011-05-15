@@ -1,0 +1,9 @@
+# ./vid_create --help
+droid_does_loopz 0.0.1 (c) 2011 Marc Held
+Options:
+    --video, -v <s>:   The video to play in the app
+    --title, -t <s>:   The title of the application
+  --package, -p <s>:   The package of the application
+     --icon, -i <s>:   The app icon
+      --version, -e:   Print version and exit
+         --help, -h:   Show this message
