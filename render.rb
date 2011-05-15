@@ -106,7 +106,7 @@ VIEWER
 ###############################################################################
 
 require 'rubygems'
-require 'optparse' 
+require 'trollop' 
 require 'ostruct'
 require 'fileutils'
 require 'erubis'
@@ -134,47 +134,34 @@ class App
   
     def parse_options
       
-      opts = OptionParser.new do |opts|
-        opts.banner = "This app takes in a bunch of stuff and spits out a android-market ready "
-        opts.banner << "annoying app that loops a video whenever you tap on the screen."
-        opts.separator "Usage: droid_does_loopz [options]"
-        opts.separator "Example: droid_does_loopz -v whip_my_hair.mov -t Whip My Hair -p com.annoy.whipmyhair -i icon.png"
-        
-        opts.separator ""
-        opts.separator "Specific options:"
+      opts = Trollop::options do
+        version "droid_does_loopz #{VERSION} (c) 2011 Marc Held"
+        banner = <<-EOS 
+This app takes in a bunch of stuff and spits out a android-market ready
+annoying app that loops a video whenever you tap on the screen.
+
+Example:
+    droid_does_loopz -v whip_my_hair.mov -t Whip My Hair -p com.annoy.whipmyhair -i icon.png
+
+Usage: 
+    droid_does_loopz [options]
+where [options] are:
+EOS
       
-        opts.on('-v', '--video FILE', "The video to play in the app") do |v| 
-          @options.video = v
-        end
-        
-        opts.on('-t', '--title NAME', "The title of the application") do |t|
-          @options.title = t
-         end
-         
-        opts.on('-p', '--package PACKAGE', "The package of the application") do |p|
-          @options.package = p
-        end
-        
-        opts.on('-i', '--icon FILE', "The app icon") do |i|
-          @options.icon = i
-        end
-
-        opts.separator ""
-        opts.separator "Common options:"
-        
-        opts.on_tail("-h", "--help", "Show this message") do
-          puts opts
-          exit
-        end
-
-        opts.on_tail("--version", "Show version") do
-          puts "#{File.basename(__FILE__)} version #{VERSION}"
-          exit
-        end
+        opt :video,   "The video to play in the app",   :type => String
+        opt :title,   "The title of the application",   :type => String
+        opt :package, "The package of the application", :type => String
+        opt :icon,    "The app icon",                   :type => String
       end
       
-      opts.parse!(@arguments)
-      @options
+      Trollop::die :video,   "must be a video"   unless File.exist?(opts[:video]) if opts[:video]
+      Trollop::die :title,   "must be provided"   unless opts[:title]
+      Trollop::die :package, "must be a package" unless opts[:package]
+      Trollop::die :icon,    "must be a ican"    unless File.exist?(opts[:icon]) if opts[:icon]
+      
+      opts.each do |k, v|
+        @options.send("#{k}=", v)
+      end
     end
     
     # Setup the arguments
@@ -228,6 +215,9 @@ def render_files
   
   #generate a keystore
    %x[keytool -genkey -v -keystore keystore -alias #{@title} -keyalg RSA -validity 10000]
+   
+   #update all android generated stuff
+   %x[android update project --target 7 --path ./]
   
   #generate an apk
    %x[ant release]
